@@ -1,7 +1,9 @@
 torch
 torchvision
-pandas
-numpy
 matplotlib
+seaborn
+pandas
 scikit-learn
-ipykernel -U --force-reinstall
+plotly
+streamlit
+numpy
