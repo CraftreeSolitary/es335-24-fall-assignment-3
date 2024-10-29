@@ -249,7 +249,7 @@ model_path = f"question_1_models/next_word_model_{block_size}_{emb_dim}_{activat
 # Load pre-trained model from a specific path
 # Load pre-trained model from a specific path
 model = NextToken(block_size, 8459, emb_dim, 2048, 2048, activation_function).to(device)
-model.load_state_dict(torch.load(model_path))
+model.load_state_dict(torch.load(model_path, map_location=device))
 model.eval()
 model = model.to(device)
 
