@@ -2,6 +2,7 @@ import streamlit as st
 import torch
 from torch import nn
 import re
+import numpy as np
 
 # Load the trained model
 class NextToken(nn.Module):
@@ -264,8 +265,6 @@ itow[index] = '#'
 
 print(len(itow))
 
-tSNE_path = f"question_1_tsne/tsne_embeddings_{block_size}_{emb_dim}_{activation}.html"
-
 # Generate text
 st.subheader("Generate Text")
 user_input = st.text_input("Enter some context:").strip()
@@ -283,17 +282,95 @@ if st.button("Generate"):
 
     st.write(output)
 
-# st.subheader("tSNE Visualization of Word Embeddings")
-# if st.button("Untrained"):
-#     with open('task_1_tnse/tsne_visualization_untrained.html', 'r') as f:
-#         html_content = f.read()
-    
-#     # Render the HTML content interactively
-#     st.components.v1.html(html_content, height=600, scrolling=True)
+tSNE_path_30 = f"question_1_tsne/tsne_embeddings_{block_size}_{emb_dim}_{activation}_30.html"
+tSNE_path_8000 = f"question_1_tsne/tsne_embeddings_{block_size}_{emb_dim}_{activation}_8000.html"
+tSNE_ut_path_30 = f"question_1_tsne/tsne_embeddings_{block_size}_{emb_dim}_{activation}_30_ut.html"
+tSNE_ut_path_8000 = f"question_1_tsne/tsne_embeddings_{block_size}_{emb_dim}_{activation}_8000_ut.html"
 
-# if st.button("Trained"):
-#     with open(tSNE_path, 'r') as f:
-#         html_content = f.read()
-    
-#     # Render the HTML content interactively
-#     st.components.v1.html(html_content, height=600, scrolling=True)
+
+st.subheader("tSNE Visualization of Word Embeddings")
+if st.button("Visualize t-SNE"):
+    col1, col2 = st.columns(2)
+
+    # Untrained Model
+    with col1:
+        st.subheader("Untrained Model")
+        st.text("Perplexity 30")
+        with open(tSNE_ut_path_30, 'r') as f:
+            html_content = f.read()
+        st.components.v1.html(html_content, height=300, scrolling=True)
+
+    with col2:
+        st.subheader("Untrained Model")
+        st.text("Perplexity 8000")
+        with open(tSNE_ut_path_8000, 'r') as f:
+            html_content = f.read()
+        st.components.v1.html(html_content, height=300, scrolling=True)
+
+    # Trained Model (similar structure as untrained section)
+    with col1:
+        st.subheader("Trained Model")
+        st.text("Perplexity 30")
+        with open(tSNE_path_30, 'r') as f:
+            html_content = f.read()
+        st.components.v1.html(html_content, height=300, scrolling=True)
+
+    with col2:
+        st.subheader("Trained Model")
+        st.text("Perplexity 8000")
+        with open(tSNE_path_8000, 'r') as f:
+            html_content = f.read()
+        st.components.v1.html(html_content, height=300, scrolling=True)
+
+
+def find_most_similar_words(word, wtoi, itow, embeddings, top_k=5):
+    # Check if the word is in the vocabulary
+    if word not in wtoi:
+        return [("Word not in vocabulary", 0)]
+
+    # Convert embeddings to numpy
+    embeddings_np = embeddings.numpy()
+
+    # Get the embedding vector of the input word
+    word_idx = wtoi[word]
+    word_embedding = embeddings_np[word_idx]
+
+    # Compute dot products with all embeddings
+    dot_products = np.dot(embeddings_np, word_embedding)
+
+    # Get top K indices with the highest dot products (excluding the word itself)
+    # Indices of top similarities in descending order
+    top_k_indices = np.argsort(dot_products)[-top_k - 1:][::-1]
+    top_k_indices = [idx for idx in top_k_indices][:top_k]  # Exclude the word itself
+
+    # Retrieve the words and similarity scores
+    # Get the highest dot product value
+    max_dot_product = dot_products[top_k_indices[0]]
+    # Calculate percentage similarity
+    percentages = (dot_products[top_k_indices] / max_dot_product) * 100
+    similar_words = [(itow[idx], percentages[i])
+                     for i, idx in enumerate(top_k_indices)]
+
+    return similar_words
+
+
+# Load the embeddings from the trained model
+embeddings = model.emb.weight.detach().cpu()
+
+# Streamlit app for finding similar words
+st.subheader("Find Similar Words")
+user_word = st.text_input("Enter a word to find similar words:")
+
+# Slider for selecting the number of similar words
+k = st.slider("Select number of similar words to generate:",
+              min_value=1, max_value=20, value=5)
+
+if st.button("Find Similar Words"):
+    if user_word.strip():
+        similar_words = find_most_similar_words(
+            user_word, wtoi, itow, embeddings, top_k=k)
+        st.write("Most similar words to '{}':".format(user_word))
+        for word, similarity in similar_words:
+            st.write(f"{word} (Similarity: {similarity:.4f}%)")
+    else:
+        st.write("Please enter a word.")
