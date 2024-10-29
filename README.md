@@ -19,11 +19,13 @@ pip3 install -r requirements.txt
 # Solutions
 
 ## Question-1: 
-Link to the streamlit app: 
+[**&#xf1e8;**  Try the Streamlit App Here](https://es335-24-fall-assignment-3-krusty-krabs.streamlit.app/)
 
 [`./question_1_analysis.ipynb`](./question_1_analysis.ipynb)
 
 [`./question_1_training.ipynb`](./question_1_training.ipynb)
+
+
 
 ## Question-2: 
 [`./question_2.ipynb`](./question_2.ipynb)
